@@ -30,7 +30,7 @@
  */
 
 metadata {
-	definition (name: "FLS100+ Motion Sensor - Modded", namespace: "homeseer", author: "support@homeseer.com") {
+	definition (name: "FLS100+ Motion Sensor v2", namespace: "homeseer", author: "support@homeseer.com") {
 		capability "Switch"
 		capability "Motion Sensor"
 		capability "Sensor"
