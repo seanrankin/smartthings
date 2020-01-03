@@ -11,16 +11,15 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-// Release: https://community.smartthings.com/t/release-virtual-alexa-switch-button/135361 
 metadata {
 
     definition (name: "Simulated Alexa Switch", namespace: "bjpierron", author: "bjpierron") {
         capability "Switch"
         capability "Sensor"
         capability "Actuator"
-        capability "Contact Sensor"
+        capability "Contact Sensor"	    		
     }
-
+    
     simulator {
 		status "open": "contact:open"
 		status "closed": "contact:closed"

@@ -17,8 +17,7 @@
  */
 metadata {
 	// Automatically generated. Make future change here.
-  // Release: https://community.smartthings.com/t/release-iris-smart-plug-3210-l-zigbee-plug-with-z-wave-repeater/31028
-	definition (name: "Iris Smart Plug 3210-L", namespace: "blebson", author: "SmartThings") {
+	definition (name: "Iris Smart Plug", namespace: "blebson", author: "SmartThings") {
 		capability "Actuator"
 		capability "Switch"
 		capability "Power Meter"
@@ -26,17 +25,21 @@ metadata {
 		capability "Configuration"
 		capability "Refresh"
 		capability "Sensor"
-
+		
 		// indicates that device keeps track of heartbeat (in state.heartbeat)
-		attribute "heartbeat", "string"
+		attribute "heartbeat", "string"     
 		attribute "timerStart", "number"
-
+		
 		attribute "energyDisplay", "string"
 		attribute "elapsedTimeDisplay", "string"
-
+	
 		command "resetEnergyUsage"
-
+			
 		fingerprint profileId: "0104", inClusters: "0000 0003 0004 0005 0006 0B04 0B05 FC03", outClusters: "0019", manufacturer: "CentraLite",  model: "3210-L", deviceJoinName: "Outlet"
+		//fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0006,0B04,0B05", outClusters: "0019", manufacturer: "CentraLite",  model: "3200", deviceJoinName: "Outlet"
+		//fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0006,0B04,0B05", outClusters: "0019", manufacturer: "CentraLite",  model: "3200-Sgb", deviceJoinName: "Outlet"
+		//fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0006,0B04,0B05", outClusters: "0019", manufacturer: "CentraLite",  model: "4257050-RZHAC", deviceJoinName: "Outlet"
+		//fingerprint profileId: "0104", inClusters: "0000,0003,0004,0005,0006,0B04,0B05", outClusters: "0019"
 	}
 
 	// simulator metadata
@@ -57,7 +60,7 @@ metadata {
 				"http://cdn.device-gse.smartthings.com/Outlet/US/OutletUS2.jpg"
 				])
 		}
-
+        
         section("Reporting Intervals") {
         	input "intervalMin", "number", title: "Minimum interval between reports [s]", defaultValue: 5, range: "1..600"
         	input "intervalMax", "number", title: "Maximum interval between reports [s]", defaultValue: 600, range: "1..600"
@@ -77,22 +80,22 @@ metadata {
 				attributeState "power", label:'${currentValue} W'
 			}
 		}
-
+        
 		valueTile("energyDisplay", "device.energyDisplay", width: 5, height: 1, decoration: "flat") {
 			state "default", label:'Energy used: ${currentValue}', unit: "kWh"
         	}
-
+        	
 		standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
 			state "default", label:"", action:"refresh.refresh", icon:"st.secondary.refresh"
 		}
-
+        
 		standardTile("resetUsage", "command.resetEnergyUsage", decoration: "flat", width: 1, height: 1){
 			state "default", action: "resetEnergyUsage", label:'Reset kWh', icon:"st.Health & Wellness.health7"
-		}
-
+		}        
+        
 		valueTile("elapsedTimeDisplay", "device.elapsedTimeDisplay", decoration: "flat", width: 5, height: 1){
 			state "default", label: 'Time: ${currentValue}', unit: "h"
-		}
+		}      
 
 		standardTile("configure", "device.switch", inactiveLabel: false, decoration: "flat", width: 1, height: 1) {
 			state "default", label:"", action:"configure", icon:"st.secondary.configure"
@@ -127,13 +130,13 @@ def parse(String description) {
 			log.info "$device updates: ${finalResult.value}"
 		}
 		else if (finalResult.type == "power") {
-			def powerValue = (finalResult.value as Integer)/10
+			def powerValue = (finalResult.value as Integer)/10           
 			sendEvent(name: "power", value: powerValue, isStateChange: true, displayed: false) // note: stateChange = true added so the energy calculation can work properly
 			/*
 				Dividing by 10 as the Divisor is 10000 and unit is kW for the device. AttrId: 0302 and 0300. Simplifying to 10
 				power level is an integer. The exact power level with correct units needs to be handled in the device type
 				to account for the different Divisor value (AttrId: 0302) and POWER Unit (AttrId: 0300). CLUSTER for simple metering is 0702
-			*/
+			*/           
 			calculateAndShowEnergy()
 		}
 		else {
@@ -148,19 +151,19 @@ def parse(String description) {
 
 def calculateAndShowEnergy()
 {
-    def recentEvents = device.statesSince("power", new Date()-1, [max: 2]).collect {[value: it.value as float, date: it.date]}
+    def recentEvents = device.statesSince("power", new Date()-1, [max: 2]).collect {[value: it.value as float, date: it.date]}        	
     def deltaT = (recentEvents[0].date.getTime() - recentEvents[1].date.getTime()) // time since last "power" event in milliseconds
     deltaT = deltaT / 3600000 // convert to hours
-
-    def energyValue = device.currentValue("energy")
+    
+    def energyValue = device.currentValue("energy") 
     if(energyValue != null) {
-    	energyValue += (recentEvents[1].value * deltaT) / 1000 // energy used since last "power" event in kWh
+    	energyValue += (recentEvents[1].value * deltaT) / 1000 // energy used since last "power" event in kWh 
     }
-
+    
     sendEvent(name: "energy", value: energyValue, displayed: false)
     sendEvent(name: "energyDisplay", value: String.format("%6.3f kWh",energyValue), displayed: false)
 
-    def currentTime = Calendar.getInstance().getTimeInMillis()
+    def currentTime = Calendar.getInstance().getTimeInMillis()   
     def timeDifference = ((long)currentTime - state.timerStart)/1000; // in seconds
     int h = (int) (timeDifference / (3600));
     int m = (int) ((timeDifference - (h * 3600)) / 60);

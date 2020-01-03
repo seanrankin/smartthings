@@ -11,7 +11,6 @@
  *  for the specific language governing permissions and limitations under the License.
  *
  */
-// Release: https://community.smartthings.com/t/release-virtual-alexa-switch-button/135361
 metadata {
 	definition (name: "Simulated Alexa Button", namespace: "bjpierron", author: "bjpierron") {
 		capability "Actuator"
@@ -44,8 +43,8 @@ def parse(String description) {
 
 def push() {
 	sendEvent(name: "switch", value: "on", isStateChange: true, display: false)
-	sendEvent(name: "switch", value: "off", isStateChange: true, display: false)
-	sendEvent(name: "contact", value: "open", isStateChange: true)
+	sendEvent(name: "switch", value: "off", isStateChange: true, display: false)	
+	sendEvent(name: "contact", value: "open", isStateChange: true)	
 	sendEvent(name: "momentary", value: "pushed", isStateChange: true)
 }
 
