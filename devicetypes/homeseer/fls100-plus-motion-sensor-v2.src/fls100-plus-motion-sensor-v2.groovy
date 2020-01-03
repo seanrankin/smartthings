@@ -21,13 +21,16 @@
  *	Changelog:
  *
  *	1.0	Initial Version
- *
- *
+ *  Modified by Nate Scwartz to allow WebCore control of Lux setting
+ *  Modified by Bruce Young on 12/22/2018 to allow setting of LuxDisableValue to 0 to turn off auto-on from Motion
+ *  Modified by Bruce Young (with advice from Nate Schwarz on 1/15/2019 to allow WebCore control of OnTime value
+ *  Modified by Bruce Young to allow WebCore control of Lux Reporting Interval
+ *  1.0B Modified Version Committed to GitHub on 1/18/2019
  *
  */
 
 metadata {
-	definition (name: "FLS100+ Motion Sensor", namespace: "homeseer", author: "support@homeseer.com") {
+	definition (name: "FLS100 Plus Motion Sensor V2", namespace: "homeseer", author: "HomeSeer") {
 		capability "Switch"
 		capability "Motion Sensor"
 		capability "Sensor"
@@ -36,7 +39,10 @@ metadata {
         capability "Configuration"
         capability "Illuminance Measurement"
 
-
+        /*Added to allow SmartApps/WebCoRE to control parameters */
+        command "setLux", ["number"]
+        command "setOnTime", ["number"]
+        command "setLuxReportTime", ["number"]
 
         fingerprint mfr: "000C", prod: "0201", model: "000B"
 }
@@ -52,7 +58,7 @@ metadata {
 
     preferences {
        input ( "onTime", "number", title: "Press Configuration button after changing preferences\n\nOn Time: Duration (8-720 seconds) [default: 15]", defaultValue: 15,range: "8..720", required: false)
-       input ( "luxDisableValue", "number", title: "Lux Value to Disable Sensor: (30-200 lux) [default: 50]", defaultValue: 50, range: "30..200", required: false)
+       input ( "luxDisableValue", "number", title: "Lux Value to Disable Sensor: (30-200 lux) [default: 50], 0 Disables Light Turn On From Motion, 255 Ignores Lux Value and Always Turns On", defaultValue: 50, range: "0..255", required: false)
        input ( "luxReportInterval", "number", title: "Lux Report Interval: (0-1440 minutes) [default 10]", defaultValue: 10, range: "0..1440", required: false)
     }
 
@@ -81,8 +87,8 @@ metadata {
 					backgroundColor:"#00a0dc"
 			}
 		}
-        */
-		/*
+   		*/
+        /*
 		valueTile("motion", "device.motion", inactiveLabel: false, width: 2, height: 2) {
 			state "motion", label:'${currentValue}'
 		}
@@ -220,7 +226,35 @@ def off() {
 	],5000)
 }
 
+/* Added by Nate Swartz and Modified by Bruce Young to allow a separate call to set Lux Sensor Threshold (parameter 2) value */
+def setLux(lux) {
+  log.debug ("setLux")
+  def cmds = []
+  if (lux == 0) {  /* Disable automatic light turn-on from motion no matter what lux level */
+    cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: lux ).format()
+  } else { if (lux == 255) { /* Enable automatic light turn-on from motion no matter what lux level */
+    cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: lux ).format()
+  } else {
+  	lux = Math.max(Math.min(lux, 200), 30) /* True lux compare values must be between 30 and 200 */
+	cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: lux ).format() }
+  }
+}
 
+/* Added by Bruce Young to allow a separate call to set Motion Reporting period (parameter 1) value */
+def setOnTime(onTimeSec) {
+  log.debug ("setOnTime")
+  def cmds = []
+    	onTimeSec = Math.max(Math.min(onTimeSec, 720), 8)
+		cmds << zwave.configurationV1.configurationSet(parameterNumber:1, size:2, scaledConfigurationValue: onTimeSec ).format()
+}
+
+/* Added by Bruce Young to allow a separate call to set Lux Reporting Interval (parameter 3) value */
+def setLuxReportTime(luxReportMin) {
+  log.debug ("setLuxReportTime")
+  def cmds = []
+        luxReportMin - Math.max(Math.min(luxReportMin, 1440), 0)
+		cmds << zwave.configurationV1.configurationSet(parameterNumber:3, size:2, scaledConfigurationValue: luxReportMin).format()
+}
 
 def poll() {
 /*
@@ -273,11 +307,19 @@ def setPrefs()
     	def onTime = Math.max(Math.min(onTime, 720), 8)
 		cmds << zwave.configurationV1.configurationSet(parameterNumber:1, size:2, scaledConfigurationValue: onTime ).format()
 	}
-    if (luxDisableValue)
-	{
-    	def luxDisableValue = Math.max(Math.min(luxDisableValue, 200), 30)
-		cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: luxDisableValue ).format()
-	}
+
+    if (luxDisableValue == 0) { /* Special Case for writing 0 - Added by BAY */
+    	cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: luxDisableValue ).format()
+  	} else {
+    if (luxDisableValue == 255) { /* Enable automatic light turn-on from motion no matter what lux level - Added by BAY */
+        cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: luxDisableValue ).format()
+    } else {
+    if (luxDisableValue) {
+    		def luxDisableValue = Math.max(Math.min(luxDisableValue, 200), 30) /* True lux compare values must be between 30 and 200 */
+			cmds << zwave.configurationV1.configurationSet(parameterNumber:2, size:2, scaledConfigurationValue: luxDisableValue ).format() }
+		}
+    }
+
     if (luxReportInterval)
 	{
     	def luxReportInterval = Math.max(Math.min(luxReportInterval, 1440), 0)
