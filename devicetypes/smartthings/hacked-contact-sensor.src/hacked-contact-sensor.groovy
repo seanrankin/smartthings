@@ -13,8 +13,8 @@
  */
 metadata {
   definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.moisture", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
-    capability "Water Sensor"
-    capability "Contact Sensor"
+		capability "Water Sensor"
+		capability "Contact Sensor"
 		capability "Configuration"
 		capability "Sensor"
 		capability "Battery"
@@ -32,13 +32,11 @@ metadata {
 	}
 
 	tiles(scale: 2) {
-    multiAttributeTile(name:"contact", type: "generic", width: 6, height: 4){
-      tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
-        attributeState "dry", label: 'kinda dry', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-        attributeState "wet", label: 'very wet', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
-        attributeState "open", label: 'is open', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-        attributeState "closed", label: 'is closed', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
-      }
+    standardTile("contact", "device.contact", width: 2, height: 2) {
+      // state "dry", label: 'kinda dry', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+      // state "wet", label: 'very wet', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+      state "open", label: '${name}: ${state}', icon: "st.contact.contact.open", backgroundColor: "#e86d13"
+      state "closed", label: '${name}: ${state}', icon: "st.contact.contact.closed", backgroundColor: "#00A0DC"
     }
     valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
       state "battery", label:'${currentValue}% battery', unit:""
@@ -78,7 +76,8 @@ def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
 {
 	def map = [:]
 	if (cmd.sensorType == 0x05) {
-		map.name = "water"
+		// map.name = "water"
+		map.name = "contact"
 		map.value = cmd.sensorState ? "open" : "closed"
 		map.descriptionText = "${device.displayName} is ${map.value}"
 	} else {
@@ -90,7 +89,8 @@ def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
 def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cmd)
 {
 	def map = [:]
-	map.name = "water"
+	// map.name = "water"
+	map.name = "contact"
 	map.value = cmd.sensorValue ? "open" : "closed"
 	map.descriptionText = "${device.displayName} is ${map.value}"
 	createEvent(map)
