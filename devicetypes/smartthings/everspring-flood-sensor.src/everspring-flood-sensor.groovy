@@ -12,8 +12,8 @@
  *
  */
 metadata {
-	definition (name: "Everspring Hacked Switch", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.moisture", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
-		capability "Water Sensor"
+	definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.moisture", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
+		capability "Contact Sensor"
 		capability "Configuration"
 		capability "Sensor"
 		capability "Battery"
@@ -23,18 +23,20 @@ metadata {
 	}
 
 	simulator {
-		status "off": "command: 9C02, payload: 00 05 00 00 00"
-		status "on": "command: 9C02, payload: 00 05 FF 00 00"
+		status "closed": "command: 9C02, payload: 00 05 00 00 00"
+		status "open": "command: 9C02, payload: 00 05 FF 00 00"
 		for (int i = 0; i <= 100; i += 20) {
 			status "battery ${i}%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: i).incomingMessage()
 		}
 	}
 
 	tiles(scale: 2) {
-		multiAttributeTile(name:"water", type: "generic", width: 6, height: 4){
+		multiAttributeTile(name:"liver", type: "generic", width: 6, height: 4){
 			tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
-				attributeState "off", icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-				attributeState "on", icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+				// attributeState "off", icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+				// attributeState "on", icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+        attributeState "open", label: 'open', icon: "st.contact.contact.open", backgroundColor: "#e86d13"
+        attributeState "closed", label: 'closed', icon: "st.contact.contact.closed", backgroundColor: "#00A0DC"
 			}
 		}
 		valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
@@ -43,8 +45,8 @@ metadata {
 		standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
 		}
-		main "water"
-		details(["water", "battery", "configure"])
+		main "contact"
+		details(["contact", "battery", "configure"])
 	}
 }
 
@@ -76,7 +78,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
 	def map = [:]
 	if (cmd.sensorType == 0x05) {
 		map.name = "water"
-		map.value = cmd.sensorState ? "wet" : "dry"
+		map.value = cmd.sensorState ? "open" : "closed"
 		map.descriptionText = "${device.displayName} is ${map.value}"
 	} else {
 		map.descriptionText = "${device.displayName}: ${cmd}"
@@ -88,7 +90,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cm
 {
 	def map = [:]
 	map.name = "water"
-	map.value = cmd.sensorValue ? "wet" : "dry"
+	map.value = cmd.sensorValue ? "open" : "closed"
 	map.descriptionText = "${device.displayName} is ${map.value}"
 	createEvent(map)
 }
