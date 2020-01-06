@@ -44,7 +44,7 @@ metadata {
     standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
       state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
     }
-		main "contact"
+    main "contact"
     details(["contact", "battery", "configure"])
 	}
 }
@@ -55,12 +55,17 @@ def parse(String description) {
 	if (parsedZwEvent) {
 		result = zwaveEvent(parsedZwEvent)
 	}
+
+	log.debug "-----------------------------------------"
+	log.debug "-----------------------------------------"
 	log.debug "Parse '${description}' returned ${result}"
+  log.debug "-----------------------------------------"
+  log.debug "-----------------------------------------"
+
 	return result
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd)
-{
+def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 	def result = [createEvent(descriptionText: "${device.displayName} woke up", isStateChange: false)]
 	def now = new Date().time
 	if (!state.battreq || now - state.battreq > 53*60*60*1000) {
@@ -72,32 +77,31 @@ def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd)
 	result
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd)
-{
+def zwaveEvent(physicalgraph.zwave.commands.sensoralarmv1.SensorAlarmReport cmd) {
 	def map = [:]
 	if (cmd.sensorType == 0x05) {
-		// map.name = "water"
-		map.name = "contact"
-		map.value = cmd.sensorState ? "open" : "closed"
+		map.name = "water"
+		map.value = cmd.sensorState ? "wet" : "dry"
 		map.descriptionText = "${device.displayName} is ${map.value}"
+    createEvent(name: "contact", value: cmd.sensorState ? "open" : "closed")
 	} else {
 		map.descriptionText = "${device.displayName}: ${cmd}"
 	}
+
 	createEvent(map)
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cmd)
-{
+def zwaveEvent(physicalgraph.zwave.commands.sensorbinaryv1.SensorBinaryReport cmd) {
 	def map = [:]
-	// map.name = "water"
-	map.name = "contact"
-	map.value = cmd.sensorValue ? "open" : "closed"
+	map.name = "water"
+	map.value = cmd.sensorValue ? "wet" : "dry"
 	map.descriptionText = "${device.displayName} is ${map.value}"
-	createEvent(map)
+
+  createEvent(name: "contact", value: cmd.sensorState ? "open" : "closed")
+  createEvent(map)
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.alarmv1.AlarmReport cmd)
-{
+def zwaveEvent(physicalgraph.zwave.commands.alarmv1.AlarmReport cmd) {
 	def map = [:]
 	if (cmd.alarmType == 1 && cmd.alarmLevel == 0xFF) {
 		map.name = "battery"
@@ -134,13 +138,11 @@ def zwaveEvent(physicalgraph.zwave.commands.batteryv1.BatteryReport cmd) {
 	[createEvent(map), response(zwave.wakeUpV1.wakeUpNoMoreInformation())]
 }
 
-def zwaveEvent(physicalgraph.zwave.Command cmd)
-{
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
 	createEvent(descriptionText: "${device.displayName}: ${cmd}", displayed: false)
 }
 
-def configure()
-{
+def configure() {
 	// Device wakes up every 4 hours, this interval allows us to miss one wakeup notification before marking offline
 	sendEvent(name: "checkInterval", value: 8 * 60 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID])
 	if (!device.currentState("battery")) {
