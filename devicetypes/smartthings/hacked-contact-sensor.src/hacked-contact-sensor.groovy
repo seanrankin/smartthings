@@ -24,6 +24,8 @@ metadata {
 	}
 
 	simulator {
+    status "dry": "command: 9C02, payload: 00 05 00 00 00"
+    status "wet": "command: 9C02, payload: 00 05 FF 00 00"
 		status "closed": "command: 9C02, payload: 00 05 00 00 00"
 		status "open": "command: 9C02, payload: 00 05 FF 00 00"
 		for (int i = 0; i <= 100; i += 20) {
@@ -32,11 +34,11 @@ metadata {
 	}
 
 	tiles(scale: 2) {
-    standardTile("contact", "device.contact", width: 2, height: 2) {
-      // state "dry", label: 'kinda dry', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-      // state "wet", label: 'very wet', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
-      state "open", label: '${name}: ${state}', icon: "st.contact.contact.open", backgroundColor: "#e86d13"
-      state "closed", label: '${name}: ${state}', icon: "st.contact.contact.closed", backgroundColor: "#00A0DC"
+    multiAttributeTile(name: "contact", type: "generic", width: 6, height: 4){
+      tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
+        attributeState "wet", label: "open", icon: "st.contact.contact.open", backgroundColor: "#e86d13"
+        attributeState "dry", label: "closed", icon: "st.contact.contact.closed", backgroundColor: "#00A0DC"
+      }
     }
     valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
       state "battery", label:'${currentValue}% battery', unit:""
