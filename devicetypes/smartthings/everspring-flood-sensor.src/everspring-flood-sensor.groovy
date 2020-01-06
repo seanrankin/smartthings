@@ -12,7 +12,7 @@
  *
  */
 metadata {
-	definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.moisture", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
+	definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.contact", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
 		capability "Contact Sensor"
 		capability "Configuration"
 		capability "Sensor"
