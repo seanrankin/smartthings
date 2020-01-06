@@ -23,8 +23,8 @@ metadata {
 	}
 
 	simulator {
-		status "dry": "command: 9C02, payload: 00 05 00 00 00"
-		status "wet": "command: 9C02, payload: 00 05 FF 00 00"
+		status "off": "command: 9C02, payload: 00 05 00 00 00"
+		status "on": "command: 9C02, payload: 00 05 FF 00 00"
 		for (int i = 0; i <= 100; i += 20) {
 			status "battery ${i}%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: i).incomingMessage()
 		}
@@ -33,8 +33,8 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name:"water", type: "generic", width: 6, height: 4){
 			tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
-				attributeState "dry", icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-				attributeState "wet", icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+				attributeState "off", icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+				attributeState "on", icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
 			}
 		}
 		valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
