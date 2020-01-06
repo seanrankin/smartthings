@@ -12,8 +12,9 @@
  *
  */
 metadata {
-	definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.contact") {
-		capability "Contact Sensor"
+  definition (name: "Hacked Contact Sensor", namespace: "smartthings", author: "SmartThings", ocfDeviceType: "x.com.st.d.sensor.moisture", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
+    capability "Water Sensor"
+    capability "Contact Sensor"
 		capability "Configuration"
 		capability "Sensor"
 		capability "Battery"
@@ -30,14 +31,23 @@ metadata {
 		}
 	}
 
-	tiles {
-    standardTile("contact", "device.water", key: "PRIMARY_CONTROL", width: 2, height: 2) {
-      state "open", icon: "st.contact.contact.open", backgroundColor: "#e86d13"
-      state "closed", icon: "st.contact.contact.closed", backgroundColor: "#00A0DC"
+	tiles(scale: 2) {
+    multiAttributeTile(name:"contact", type: "generic", width: 6, height: 4){
+      tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
+        attributeState "dry", label: 'kinda dry', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+        attributeState "wet", label: 'very wet', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+        attributeState "open", label: 'is open', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
+        attributeState "closed", label: 'is closed', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
+      }
     }
-
+    valueTile("battery", "device.battery", decoration: "flat", inactiveLabel: false, width: 2, height: 2) {
+      state "battery", label:'${currentValue}% battery', unit:""
+    }
+    standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+      state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
+    }
 		main "contact"
-		details "contact"
+    details(["contact", "battery", "configure"])
 	}
 }
 
