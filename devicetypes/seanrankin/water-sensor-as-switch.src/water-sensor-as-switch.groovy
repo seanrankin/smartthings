@@ -50,64 +50,63 @@
  */
 
 preferences {
-    // manufacturer default wake up is every hour; optionally increase for better battery life
-    input "userWakeUpInterval", "number", title: "Wake Up Interval (seconds)", description: "Default 3600 sec (60 sec - 194 days)", defaultValue: '3600', required: false, displayDuringSetup: true
-    input "alwaysShowWakeUp", "bool", title: "Report WakeUp", description: "Report when device wakes up in activity feed", required: true, displayDuringSetup: true
-    input "alwaysShowBattery", "bool", title: "Always Report Battery", description: "Report battery status in activity feed whether or not it has changed", required: true, displayDuringSetup: true
+  // manufacturer default wake up is every hour; optionally increase for better battery life
+  input "userWakeUpInterval", "number", title: "Wake Up Interval (seconds)", description: "Default 3600 sec (60 sec - 194 days)", defaultValue: '60', required: false, displayDuringSetup: true
+  input "alwaysShowWakeUp", "bool", title: "Report WakeUp", description: "Report when device wakes up in activity feed", required: true, displayDuringSetup: true
+  input "alwaysShowBattery", "bool", title: "Always Report Battery", description: "Report battery status in activity feed whether or not it has changed", required: true, displayDuringSetup: true
 }
 
 metadata {
-	definition (name: "Water Sensor As Switch", namespace: "seanrankin", author: "tony saye") {
+	definition (name: "Utilitech Water Switch", namespace: "seanrankin", author: "Sean Rankin", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
 		capability "Water Sensor"
 		capability "Battery"
 		capability "Configuration"
-        capability "Sensor"
-        capability "Actuator"
+    capability "Sensor"
+    capability "Actuator"
 
-        command "toggleWakeUpStatus"
+    command "toggleWakeUpStatus"
+    fingerprint deviceId: "0xA102", inClusters: "0x86,0x72,0x85,0x84,0x80,0x70,0x9C,0x20,0x71"
+}
 
-        fingerprint deviceId: "0xA102", inClusters: "0x86,0x72,0x85,0x84,0x80,0x70,0x9C,0x20,0x71"
+simulator {
+	status "dry": "command: 9C02, payload: 00 05 00 00 00"
+	status "wet": "command: 9C02, payload: 00 05 FF 00 00"
+  status "wakeup": "command: 8407, payload: "
+  status "low batt alarm": "command: 7105, payload: 01 FF"
+	status "battery <20%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: 0xFF).incomingMessage()
+  for (int i = 20; i <= 100; i += 10) {
+		status "battery ${i}%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: i).incomingMessage()
 	}
+}
 
-	simulator {
-		status "dry": "command: 9C02, payload: 00 05 00 00 00"
-		status "wet": "command: 9C02, payload: 00 05 FF 00 00"
-        status "wakeup": "command: 8407, payload: "
-        status "low batt alarm": "command: 7105, payload: 01 FF"
-		status "battery <20%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: 0xFF).incomingMessage()
-        for (int i = 20; i <= 100; i += 10) {
-			status "battery ${i}%": new physicalgraph.zwave.Zwave().batteryV1.batteryReport(batteryLevel: i).incomingMessage()
+tiles (scale:2) {
+	multiAttributeTile(name:"water", type: "generic", width: 6, height: 4) {
+		tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
+			attributeState "dry", label:'${name} is off', icon:"st.contact.contact.closed", backgroundColor:"#DAC400"
+			attributeState "wet", label:'${name} is on', icon:"st.contact.contact.open", backgroundColor:"#FF6666"
 		}
-    }
-
-    tiles (scale:2) {
-		multiAttributeTile(name:"water", type: "generic", width: 6, height: 4) {
-			tileAttribute ("device.water", key: "PRIMARY_CONTROL") {
-				attributeState "dry", label:'${name}', icon:"st.alarm.water.dry", backgroundColor:"#ffffff"
-				attributeState "wet", label:'${name}', icon:"st.alarm.water.wet", backgroundColor:"#00a0dc"
-			}
-		}
-		valueTile("battery", "device.battery", inactiveLabel: false, canChangeBackground: true, width: 2, height: 2) {
-			state "battery", label:'${currentValue}%\nBattery', unit:"",
-            backgroundColors:[
-				[value: 19, color: "#BC2323"],
-				[value: 20, color: "#D04E00"],
-				[value: 30, color: "#D04E00"],
-				[value: 40, color: "#DAC400"],
-				[value: 41, color: "#79b821"]
-			]
-		}
-        valueTile("wakeUpStatus", "device.wakeUpStatus", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-            state "wakeUpStatus", label:'${currentValue}', unit:"", action: "toggleWakeUpStatus"
-            // green = #44b621; yellow = #f1d801; orange = #d04e00; red = #bc2323
-            // attention orange = #e86d13; battery green = #79b821
-        }
-		standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
-			state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
-		}
-		main "water"
-		details(["water", "battery", "wakeUpStatus", "configure"])
 	}
+	valueTile("battery", "device.battery", inactiveLabel: false, canChangeBackground: true, width: 2, height: 2) {
+		state "battery", label:'${currentValue}%\nBattery', unit:"",
+          backgroundColors:[
+      			[value: 19, color: "#BC2323"],
+      			[value: 20, color: "#D04E00"],
+      			[value: 30, color: "#D04E00"],
+      			[value: 40, color: "#DAC400"],
+      			[value: 41, color: "#79b821"]
+      		]
+	}
+  valueTile("wakeUpStatus", "device.wakeUpStatus", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+    state "wakeUpStatus", label:'${currentValue}', unit:"", action: "toggleWakeUpStatus"
+    // green = #44b621; yellow = #f1d801; orange = #d04e00; red = #bc2323
+    // attention orange = #e86d13; battery green = #79b821
+  }
+	standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+		state "configure", label:'', action:"configuration.configure", icon:"st.secondary.configure"
+	}
+	main "water"
+	 details(["water", "battery", "wakeUpStatus", "configure"])
+  }
 }
 
 def parse(String description) {
@@ -115,50 +114,47 @@ def parse(String description) {
 
 	def parsedZwEvent = zwave.parse(description, [0x9C: 1, 0x71: 1, 0x84: 2, 0x30: 1, 0x70: 1])
 	def result = []
-
     if (parsedZwEvent) {
-        result = zwaveEvent(parsedZwEvent)
-        log.debug "Parsed ${parsedZwEvent} to ${result.inspect()}"
+      result = zwaveEvent(parsedZwEvent)
+      log.debug "Parsed ${parsedZwEvent} to ${result.inspect()}"
     } else {
-        log.debug "Non-parsed event: ${description}"
+      log.debug "Non-parsed event: ${description}"
     }
-
     updateStatus()
-
-	return result
-}
+	  return result
+  }
 
 def zwaveEvent(physicalgraph.zwave.commands.wakeupv2.WakeUpNotification cmd) {
 
-    // Appears that the Everspring/Utilitech water sensor responds to batteryGet, but not wakeUpNoMoreInformation(?)
-	/* Oct-2016: troubleshooting not getting wakeUpIntervalSet during WakeUpNotification
-	/            Was trying to only send wakeUpInterval if it was changed, but sensor didn't seem to be getting command
-	/            during wakeup; now sending wakeUpInterval and getting battery status for each wakeup period
-	/            Note: some wakeUp events still seem to be missed, perhaps due to SmartThings latency? But shouldn't be a big
-	/                  deal if a wakeUp here or there are missed since we're only setting wakeUpInterval and getting battery
-	/                  status.
-	*/
+  // Appears that the Everspring/Utilitech water sensor responds to batteryGet, but not wakeUpNoMoreInformation(?)
+  /* Oct-2016: troubleshooting not getting wakeUpIntervalSet during WakeUpNotification
+  /            Was trying to only send wakeUpInterval if it was changed, but sensor didn't seem to be getting command
+  /            during wakeup; now sending wakeUpInterval and getting battery status for each wakeup period
+  /            Note: some wakeUp events still seem to be missed, perhaps due to SmartThings latency? But shouldn't be a big
+  /                  deal if a wakeUp here or there are missed since we're only setting wakeUpInterval and getting battery
+  /                  status.
+  */
 
-    //def result = [createEvent(descriptionText: "${device.displayName} woke up", isStateChange:  false)]
+  //def result = [createEvent(descriptionText: "${device.displayName} woke up", isStateChange:  false)]
 	def map = [:]
-    def result
-	map.descriptionText = "${device.displayName} woke up"
-	map.displayed = true
+  def result
+    map.descriptionText = "${device.displayName} woke up"
+    map.displayed = true
     if (alwaysShowWakeUp) { map.isStateChange = true } // always report Wake Up events in activity feed
-	result = [createEvent(map)]
+    result = [createEvent(map)]
 
     // If user has changed userWakeUpInterval, send the new interval to the device
-	/*def userWake = getUserWakeUp(userWakeUpInterval)
+    /*def userWake = getUserWakeUp(userWakeUpInterval)
     if (state.wakeUpInterval != userWake) {
-        state.wakeUpInterval = userWake
-        result << response("delay 200")
-        result << response(zwave.wakeUpV2.wakeUpIntervalSet(seconds:state.wakeUpInterval, nodeid:zwaveHubNodeId))
-        result << response("delay 200")
-        result << response(zwave.wakeUpV2.wakeUpIntervalGet())
+      state.wakeUpInterval = userWake
+      result << response("delay 200")
+      result << response(zwave.wakeUpV2.wakeUpIntervalSet(seconds:state.wakeUpInterval, nodeid:zwaveHubNodeId))
+      result << response("delay 200")
+      result << response(zwave.wakeUpV2.wakeUpIntervalGet())
     }*/
 
     // Always send wakeUpInterval and get battery status
-	state.wakeUpInterval = getUserWakeUp(userWakeUpInterval)
+    state.wakeUpInterval = getUserWakeUp(userWakeUpInterval)
     result << response(zwave.wakeUpV2.wakeUpIntervalSet(seconds:state.wakeUpInterval, nodeid:zwaveHubNodeId))
     result << response("delay 200")
     result << response(zwave.wakeUpV2.wakeUpIntervalGet())
