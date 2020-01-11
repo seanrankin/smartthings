@@ -57,7 +57,7 @@ preferences {
 }
 
 metadata {
-	definition (name: "Utilitech Water Switch", namespace: "seanrankin", author: "Sean Rankin", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
+	definition (name: "Water Sensor As Switch", namespace: "seanrankin", author: "Sean Rankin", runLocally: true, minHubCoreVersion: '000.024.0000', executeCommandsLocally: true) {
 		capability "Water Sensor"
 		capability "Battery"
 		capability "Configuration"
